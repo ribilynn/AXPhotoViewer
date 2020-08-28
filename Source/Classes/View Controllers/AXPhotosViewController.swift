@@ -646,18 +646,37 @@ import FLAnimatedImage_tvOS
         }
         
         guard let uAnyRepresentation = anyRepresentation else { return }
-        
         let activityViewController = UIActivityViewController(activityItems: [uAnyRepresentation], applicationActivities: nil)
-        activityViewController.completionWithItemsHandler = { [weak self] (activityType, completed, returnedItems, activityError) in
-            guard let `self` = self else { return }
-            
-            if completed, let activityType = activityType {
-                self.actionCompleted(activityType: activityType, for: photo)
-            }
-        }
         
-        activityViewController.popoverPresentationController?.barButtonItem = barButtonItem
-        self.present(activityViewController, animated: true)
+        if #available(iOS 13, *) {
+            let fakeViewController = UIViewController()
+            fakeViewController.modalPresentationStyle = .overFullScreen
+
+            activityViewController.completionWithItemsHandler = { [weak self, weak fakeViewController] (activityType, completed, returnedItems, activityError) in
+                if completed, let activityType = activityType {
+                    self?.actionCompleted(activityType: activityType, for: photo)
+                }
+                if let presentingViewController = fakeViewController?.presentingViewController {
+                    presentingViewController.dismiss(animated: false, completion: nil)
+                } else {
+                    fakeViewController?.dismiss(animated: false, completion: nil)
+                }
+            }
+            fakeViewController.popoverPresentationController?.barButtonItem = barButtonItem
+            present(fakeViewController, animated: false) { [weak fakeViewController] in
+                fakeViewController?.present(activityViewController, animated: true, completion: nil)
+            }
+        } else {
+            activityViewController.completionWithItemsHandler = { [weak self] (activityType, completed, returnedItems, activityError) in
+                guard let `self` = self else { return }
+                
+                if completed, let activityType = activityType {
+                    self.actionCompleted(activityType: activityType, for: photo)
+                }
+            }
+            activityViewController.popoverPresentationController?.barButtonItem = barButtonItem
+            self.present(activityViewController, animated: true)
+        }
     }
     
     @objc public func closeAction(_ sender: UIBarButtonItem) {
