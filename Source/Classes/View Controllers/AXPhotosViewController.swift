@@ -663,6 +663,7 @@ import FLAnimatedImage_tvOS
                 }
             }
             fakeViewController.popoverPresentationController?.barButtonItem = barButtonItem
+            activityViewController.popoverPresentationController?.barButtonItem = barButtonItem
             present(fakeViewController, animated: false) { [weak fakeViewController] in
                 fakeViewController?.present(activityViewController, animated: true, completion: nil)
             }
